@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Customer Database</h1>
+<p>Welcome! Below is the list of customers. Sensitive data is anonymized for employees.</p>
+
+<table id="customer-table" border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Address</th>
+            <th>Balance</th>
+            <th>Credit Score</th>
+            <th>Bank Num R</th>
+            <th>Bank Num A</th>
+            <th>SSN</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Data will be inserted here by JS -->
+    </tbody>
+</table>
+
+<script>
+const cols_query = ['customerFirst','customerLast','address','balance','creditScore','bankNumR','bankNumA','SSN'];
+
+//customer data from backend API
+fetch('/api/customers')
+    .then(response => response.json())
+    .then(data => {
+        const tableBody = document.querySelector('#customer-table tbody');
+        tableBody.innerHTML = '';  
+
+        // table rows
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            cols_query.forEach(col => {
+                const td = document.createElement('td');
+                td.textContent = row[col]; // to match keys from Python dict
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+    })
+    .catch(err => {
+        console.error('Error fetching customer data:', err);
+        const tableBody = document.querySelector('#customer-table tbody');
+        tableBody.innerHTML = '<tr><td colspan="8">Failed to load customer data.</td></tr>';
+    });
+</script>
+{% endblock %}
