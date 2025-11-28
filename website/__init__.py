@@ -1,90 +1,64 @@
-from flask import Flask, render_template
-import mysql.connector
+from flask import Flask, session, redirect, url_for, flash
+from flask_sqlalchemy import SQLAlchemy
+import os
+from os import path
+from flask_login import LoginManager, current_user, logout_user
+from datetime import timedelta, datetime
 
-#creates the connection to the mysql database
-
-#must be a function that is initialized in EVERY page function, and not globally
-#because if one function closes the global function, it is closed for ALL OTHER pages
-def create_conn():
-    conn = mysql.connector.connect(
-        #CHANGE INFORMATION HERE FOR PRIVATE TESTING ON PERSONAL DATABASE
-        host="localhost",
-        port=8889,
-        user="root",
-        password="root",
-        database='ss_final'
-    )
-    return conn
-
+db = SQLAlchemy()
+DB_NAME = "database.db"
 
 def create_app():
-    #flask database information
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = '0HMhvC85qeiP9oDoovGDJbLwuAbGJYKA'
-    # from .views import views
-    # from .auth import auth
+    app.config['SECRET_KEY'] = 'fsdfsadfsafasfasf'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+    app.config['SESSION_PERMANENT'] = False
+    db.init_app(app)
+
+    from .views import views
+    from .auth import auth
+
+    app.register_blueprint(views, url_prefix='/')
+    app.register_blueprint(auth, url_prefix='/')
+    
+    from .models import User
+    
+    with app.app_context():
+        db.create_all()
+
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth.login'
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
+
+    @app.after_request
+    def no_cache_pages(response):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+    @app.before_request
+    def user_timeout(): # timeout user after a set amount of time
+        if not current_user.is_authenticated: # not logged in
+            return
+        now = datetime.utcnow().timestamp()
+        last_activity = session.get('last_activity')
+        if last_activity is not None and (now-last_activity>10*60): # user has been afk for 10 minutes
+            logout_user()
+            session.clear()
+            flash('You have been logged out due to inactivity.', 'error')
+            return redirect(url_for('auth.login'))
+        session['last_activity'] = now
+
+
     return app
 
-#creates appa
-app = create_app()
-
-
-
-@app.route('/')
-#route for base page that shows the raw data from database
-def base():
-
-    #create the local connection
-    conn = create_conn()
-
-    #creates the interactant that allows for queries to be made to a certain database
-    mycursor = conn.cursor(dictionary=True)
-
-    #runs the query
-    mycursor.execute("SELECT * FROM Customers")
-
-    #stores the fetched results in a variable
-    results = mycursor.fetchall()
-
-    #closes the interactant variable and the connection
-    mycursor.close()
-    conn.close()
-
-    #returns the results to the render template that renders the data on the specified webpage
-    return render_template("base.html", results = results)
-
-@app.route('/censored')
-def cenx():
-
-    #create the local connection
-    conn = create_conn()
-
-    #creates the interactant that allows for queries to be made to a certain database
-    mycursor = conn.cursor(dictionary=True)
-
-    #creates an array of a row of customer data that has been censored
-    selected_row = []
-
-    #a list of columns that have been selected for censorship AND printing
-    cols_query = ['customerFirst', 'customerLast', 'address', 'balance', 'creditScore', 'bankNumR', 'bankNumA', 'SSN']
-
-    #a function that censors as many columns in the cols_query and has specific handling for each type of data
-    for col in cols_query:
-        if col == 'SSN':
-            selected_row.append(f"CONCAT('***-**-', RIGHT({col}, 4)) AS {col}")
-        elif col == 'balance' or col == 'creditScore':
-            selected_row.append(f"{col} AS {col}")
-        elif col == 'bankNumR' or col == 'bankNumA':
-            selected_row.append(f"CONCAT('*****', RIGHT({col}, 4)) AS {col}")
-        else:
-            selected_row.append(f"CONCAT(LEFT({col}, 2), '***') AS {col}")
-    
-    #gets the full query
-    full_query = "SELECT " + ", ".join(selected_row) + " FROM ss_final.Customers"
-    mycursor.execute(full_query)
-    results = mycursor.fetchall()
-    return render_template("cenx.html", results = results)
-
-#Debugger
-if __name__ == '__main__':
-    app.run(debug=True)
+def create_database(app):
+    if not os.path.exists('website/' + DB_NAME):
+        #db.create_all(app=app)
+        db.create_all()
+        print('Created Database!')
