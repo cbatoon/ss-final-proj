@@ -1,8 +1,8 @@
 # stores URL endpoints and view functions
 # where users can actually go to...
-from flask import Blueprint, render_template
+from . import db
+from flask import Blueprint, abort, render_template, flash
 from flask_login import current_user, login_required
-
 from .models import Customer, AuditLogging, User
 from .logging import log_action
 
@@ -34,3 +34,24 @@ def users():
         abort(403)
     all_users = User.query.all()
     return render_template("users.html", users=all_users, user=current_user)
+
+#New function for deleting users
+@views.route('/delete/<int:id>')
+@login_required
+def delete(id):
+    delUser = User.query.get_or_404(id)
+    
+    if current_user.role not in ("admin", "owner"):
+        abort(403) # user authenticated but is not authorized to view page
+
+    try:
+        db.session.delete(delUser)
+        db.session.commit()
+        flash(f"User {delUser} was deleted successfully!")
+
+        all_users = User.query.all()
+        return render_template("users.html", users=all_users, user=current_user)
+    except Exception as e:
+        flash(f"There was an error! {e}")
+        all_users = User.query.all()
+        return render_template("users.html", users=all_users, user=current_user)

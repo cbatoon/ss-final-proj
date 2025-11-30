@@ -23,6 +23,9 @@
             <td>{{ u.email }}</td>
             <td>{{ u.first_name }} {{ u.last_name }}</td>
             <td>{{ u.role }}</td>
+            {% if u.role in ['admin', 'employee'] %}
+            <td><a href="{{ url_for('views.delete', id=u.id)}}" onClick="return confirm('Are you sure?')">Delete</a></td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>

@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 app = create_app()
 
 insert_users=f"""
-INSERT INTO user (
+INSERT IGNORE INTO user (
     id,
     employee_id,
     email,
@@ -21,7 +21,7 @@ INSERT INTO user (
 """
 
 insert_customers= """
-INSERT INTO customer (
+INSERT IGNORE INTO customer (
     customerNum,
     customerFirst,
     customerLast,
