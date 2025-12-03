@@ -1,9 +1,10 @@
 # stores URL endpoints and view functions
 # where users can actually go to...
 from . import db
-from flask import Blueprint, abort, render_template, flash
+from flask import Blueprint, abort, render_template, flash, request, redirect, url_for
 from flask_login import current_user, login_required
 from .models import Customer, AuditLogging, User
+from werkzeug.security import generate_password_hash
 from .logging import log_action
 
 views = Blueprint('views', __name__)
@@ -34,6 +35,37 @@ def users():
         abort(403)
     all_users = User.query.all()
     return render_template("users.html", users=all_users, user=current_user)
+
+
+
+
+@views.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        # Get form data
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        password = request.form.get('password')
+
+        current_user.first_name = first_name
+        current_user.last_name = last_name
+
+        # Only admin or owner can change email
+        if current_user.role in ("admin", "owner"):
+            email = request.form.get('email')
+            current_user.email = email
+
+        if password:  # update password if provided
+            current_user.password = generate_password_hash(password, method='sha256')
+
+        try:
+            db.session.commit()
+            flash("Profile updated successfully!", "success")
+        except Exception as e:
+            flash(f"Error updating profile: {e}", "error")
+
+    return render_template("profile.html", user=current_user)
 
 #New function for deleting users
 @views.route('/delete/<int:id>')

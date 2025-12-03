@@ -1,5 +1,82 @@
-{% extends "base.html" %} {% block title %}Home{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
 
 {% block content %}
-    <h1>Welcome, {{ current_user.first_name }}!</h1>    
+<div class="mt-4">
+    <h2 class="mb-4">Welcome, {{ user.first_name }}!</h2>
+
+    <div class="row">
+        {% if user.role == 'employee' %}
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Client List</h5>
+                        <p class="card-text">View and manage client information assigned to you.</p>
+                        <a href="/clients" class="btn btn-primary">Go to Clients</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Profile</h5>
+                        <p class="card-text">Update your personal information and password.</p>
+                        <!-- This now points to the unified profile page -->
+                        <a href="/profile" class="btn btn-secondary">View Profile</a>
+                    </div>
+                </div>
+            </div>
+
+        {% elif user.role == 'admin' %}
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">User Management</h5>
+                        <p class="card-text">Add, edit, or delete employee accounts.</p>
+                        <a href="/users" class="btn btn-primary">Manage Users</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Client List</h5>
+                        <p class="card-text">View all clients in the system.</p>
+                        <a href="/clients" class="btn btn-secondary">View Clients</a>
+                    </div>
+                </div>
+            </div>
+
+        {% elif user.role == 'owner' %}
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Audit Logs</h5>
+                        <p class="card-text">Monitor all employee actions in the system.</p>
+                        <a href="/logs" class="btn btn-danger">View Logs</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">User Management</h5>
+                        <p class="card-text">Full control over employee accounts.</p>
+                        <a href="/users" class="btn btn-primary">Manage Users</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Client List</h5>
+                        <p class="card-text">Access all client data.</p>
+                        <a href="/clients" class="btn btn-secondary">View Clients</a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
