@@ -4,15 +4,21 @@ import os
 from os import path
 from flask_login import LoginManager, current_user, logout_user
 from datetime import timedelta, datetime
+from flask_wtf import CSRFProtect # anti CSRF tokens
 
 db = SQLAlchemy()
 DB_NAME = "database.db"
+csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'fsdfsadfsafasfasf'
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SESSION_PERMANENT'] = False
+
+    app.config['WTF_CSRF_TIME_LIMIT'] = 600  # 10 minutes
+    csrf.init_app(app)
+
     db.init_app(app)
 
     from .views import views
@@ -40,6 +46,30 @@ def create_app():
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
+
+    @app.after_request
+    def add_CSP_headers(response):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+        response.headers["X-Frame-Options"] = "DENY"
+
+        response.headers["X-Content-Type-Options"] = "nosniff"
+
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com; "
+            "style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com https://maxcdn.bootstrapcdn.com; "
+            "font-src 'self' https://stackpath.bootstrapcdn.com https://maxcdn.bootstrapcdn.com; "
+            "img-src 'self' data:; "
+        )
+
+        return response
+
 
     @app.before_request
     def user_timeout(): # timeout user after a set amount of time

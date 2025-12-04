@@ -4,6 +4,7 @@
     <div class="card-body">
       <h3 class="text-center">Rob Bing U Credit®</h3>
       <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <h5 align="center">Employee Portal</h3>
           <div class="form-group">
             <label for="email">Email Address</label>

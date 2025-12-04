@@ -67,23 +67,27 @@ def profile():
 
     return render_template("profile.html", user=current_user)
 
-#New function for deleting users
-@views.route('/delete/<int:id>')
+@views.route('/delete/<int:id>', methods=['POST'])
 @login_required
 def delete(id):
     delUser = User.query.get_or_404(id)
     
     if current_user.role not in ("admin", "owner"):
+        log_action("unauthorized_delete_action",  f"User {current_user.email} attempted to delete {delUser.email}")
         abort(403) # user authenticated but is not authorized to view page
 
     try:
         db.session.delete(delUser)
         db.session.commit()
-        flash(f"User {delUser} was deleted successfully!")
+        log_action("delete_user", details=f"Deleted user {delUser.email}")
+
+        flash(f"User {delUser.email} was deleted successfully!")
 
         all_users = User.query.all()
         return render_template("users.html", users=all_users, user=current_user)
     except Exception as e:
         flash(f"There was an error! {e}")
+        log_action("delete_error", details=f"Could not delete User {delUser.email}")
+
         all_users = User.query.all()
         return render_template("users.html", users=all_users, user=current_user)

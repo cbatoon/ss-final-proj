@@ -24,8 +24,14 @@
             <td>{{ u.first_name }} {{ u.last_name }}</td>
             <td>{{ u.role }}</td>
             {% if u.role in ['admin', 'employee'] %}
-            <td><a href="{{ url_for('views.delete', id=u.id)}}" onClick="return confirm('Are you sure?')">Delete</a></td>
-            {% endif %}
+<td>
+<form method="POST" action="{{ url_for('views.delete', id=u.id) }}" style="display:inline;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">
+        Delete
+    </button>
+</form>
+</td>            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
