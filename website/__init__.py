@@ -12,6 +12,14 @@ csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__)
+    # Gabriel's Change for "Cookie without SameSite Attribute
+        # --- Secure session cookie settings ---
+    # Lax is good for typical login sites; use "Strict" if you don't need cross-site POSTs.
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    # In production over HTTPS, set this to True.
+    app.config["SESSION_COOKIE_SECURE"] = False   # True when deployed with HTTPS
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+# End Code
     app.config['SECRET_KEY'] = 'fsdfsadfsafasfasf'
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SESSION_PERMANENT'] = False
@@ -91,4 +99,5 @@ def create_database(app):
     if not os.path.exists('website/' + DB_NAME):
         #db.create_all(app=app)
         db.create_all()
+
         print('Created Database!')
