@@ -55,7 +55,7 @@ def create_app():
         response.headers["Expires"] = "0"
         return response
 # Gabriel's Change for csP Headrers security issue
-        @app.after_request
+    @app.after_request
     def add_CSP_headers(response):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
@@ -103,4 +103,5 @@ def create_database(app):
         db.create_all()
 
         print('Created Database!')
+
 
