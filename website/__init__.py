@@ -54,29 +54,32 @@ def create_app():
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
-
-    @app.after_request
+# Gabriel's Change for csP Headrers security issue
+        @app.after_request
     def add_CSP_headers(response):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
 
         response.headers["X-Frame-Options"] = "DENY"
-
         response.headers["X-Content-Type-Options"] = "nosniff"
-
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
-
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com; "
-            "style-src 'self' 'unsafe-inline' https://stackpath.bootstrapcdn.com https://maxcdn.bootstrapcdn.com; "
+        csp = (
+            "default-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com "
+            "https://stackpath.bootstrapcdn.com https://maxcdn.bootstrapcdn.com; "
+            "script-src 'self' https://code.jquery.com https://cdnjs.cloudflare.com; "
+            "style-src 'self' https://stackpath.bootstrapcdn.com https://maxcdn.bootstrapcdn.com; "
             "font-src 'self' https://stackpath.bootstrapcdn.com https://maxcdn.bootstrapcdn.com; "
-            "img-src 'self' data:; "
+            "img-src 'self' data:;"
         )
+        response.headers["Content-Security-Policy"] = csp
+
+        # Hide Werkzeug / Python version
+        response.headers.pop("Server", None)
 
         return response
+#End Code
 
 
     @app.before_request
@@ -92,7 +95,6 @@ def create_app():
             return redirect(url_for('auth.login'))
         session['last_activity'] = now
 
-
     return app
 
 def create_database(app):
@@ -101,3 +103,4 @@ def create_database(app):
         db.create_all()
 
         print('Created Database!')
+
